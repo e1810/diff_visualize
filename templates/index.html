@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="/static/css/index.css">
+	<title>Diff App</title>
+</head>
+
+<body>
+	<form action="/" method="post">
+		<div id="before">
+			before
+			<hr>
+			<div class=txtarea>
+				<textarea name="text1" cols=40 rows=20>{{ s }}</textarea>
+			</div>
+		</div>
+	
+		<div id="after">
+			after
+			<hr>
+			<div class=txtarea>
+				<textarea name="text2" cols=40 rows=20>{{ t }}</textarea>
+			</div>
+		</div>
+
+		<div id="submit-button">
+			<button type="submit">submit</button>
+		</div>
+	</form>
+	
+	<div id="diff">
+		diff (編集距離: {{ edit_distance }})
+		<hr>
+		<div class=txtarea>
+			<p>{{ diff|safe}}</p>
+		</div>
+	</div>
+
+</body>

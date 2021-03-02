@@ -1,0 +1,48 @@
+body {
+	font: bold;
+}
+
+textarea {
+	width: 30vw;
+	height: 30vh;
+}
+
+.change {
+	font: bold;
+	color: green;
+}
+
+.txtarea {
+	margin: 5%;
+	text-align: center;
+}
+
+#submit-button {
+	position: absolute;
+	top: 40vh;
+	width: 10%;
+	margin-left: 45%;
+	text-align: center;
+}
+
+#before {
+	background: lightgreen;
+	width: 40vw;
+	margin: 5% auto;
+	float: left
+}
+
+#after {
+	background: lightgreen;
+	width: 40vw;
+	margin: 5% auto;
+	float: right;
+}
+
+#diff {
+	background: lightblue;
+	position: absolute;
+	top: 50vh;
+	width: 40vw;
+	margin-left: 30vw;
+}
