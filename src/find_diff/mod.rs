@@ -46,7 +46,22 @@ pub fn edit_distance(ss: String, st: String) -> (i32, String) {
 		}
 	}
 
-	return (dp[n][m], dps[n][m].clone());
+	return (dp[n][m], lf_to_br(dps[n][m].clone()));
+}
+
+
+fn lf_to_br(s: String) -> String {
+	let mut ret = "".to_string();
+	for c in s.chars() {
+		if c=='\n' {
+			ret += "<br>";
+		} else if c=='\t' {
+			ret += "&nbsp;&nbsp;&nbsp;&nbsp;";
+		} else {
+			ret += &String::from(c);
+		}
+	}
+	return ret;
 }
 
 
