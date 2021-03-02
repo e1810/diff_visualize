@@ -46,7 +46,7 @@ struct Submission {
 
 #[post("/")]
 async fn index_post(params: web::Form<Submission>) -> Result<HttpResponse, MyError> {
-	let (di, ds) = find_diff::edit_distance(params.text1.as_bytes(), params.text2.as_bytes());
+	let (di, ds) = find_diff::edit_distance(params.text1.clone(), params.text2.clone());
 	let response_body = IndexTemplate{
 		s: params.text1.clone(),
 		t: params.text2.clone(),
