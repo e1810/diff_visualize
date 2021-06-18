@@ -1,53 +1,124 @@
 extern crate html_escape;
 use html_escape::encode_text;
 
-pub fn edit_distance(ss: String, st: String) -> (i32, String) {
-	let s = ss.as_bytes();
-	let t = st.as_bytes();
-	let n = s.len();
-	let m = t.len();
 
-	let mut dps = vec![vec!["".to_string(); m+1]; n+1];
-	let mut dp = vec![vec![1e9 as i32; m+1]; n+1];
-	dp[0][0] = 0;
+fn replace_deco(s: &str, t: &str) -> String {
+	"<span style=\"color:blue\">[".to_string()
+		+ &encode_text(&s) + "->"
+		+ &encode_text(&t) + "]</span>"
+}
 
-	for i in 0..=n {
-		for j in 0..=m {
-			if i>0 && j>0 {
-				if s[i-1]==t[j-1] {
-					if dp[i][j] > dp[i-1][j-1] {
-						dp[i][j] = dp[i-1][j-1];
-						dps[i][j] = dps[i-1][j-1].clone() + &encode_text(&ss[i-1..i]);
-					}
-				} else {
-					if dp[i][j] > dp[i-1][j-1] + 1 {
-						dp[i][j] = dp[i-1][j-1] + 1;
-						dps[i][j] = dps[i-1][j-1].clone() + "<span style=\"color:blue\">["
-							+ &encode_text(&ss[i-1..i]) + "->"
-							+ &encode_text(&st[j-1..j]) + "]</span>";
-					}
-				}
-			}
+fn delete_deco(s: &str) -> String {
+	"<span style=\"color:red\">".to_string()
+		+ &encode_text(&s) + "</span>"
+}
 
-			if i>0 {
-				if dp[i][j] > dp[i-1][j] + 1 {
-					dp[i][j] = dp[i-1][j] + 1;
-					dps[i][j] = dps[i-1][j].clone() + "<span style=\"color:red\">" 
-						+ &encode_text(&ss[i-1..i]) + "</span>";
-				}
-			}
-			if j>0 {
-				if dp[i][j] > dp[i][j-1] + 1 {
-					dp[i][j] = dp[i][j-1] + 1;
-					dps[i][j] = dps[i][j-1].clone() + "<span style=\"color:green\">"
-						+ &encode_text(&st[j-1..j]) + "</span>";
-				}
-			}
+fn insert_deco(t: &str) -> String {
+	"<span style=\"color:green\">".to_string()
+		+ &encode_text(&t) + "</span>"
+}
+
+
+
+pub struct EditDistance {
+	ss: String,
+	st: String,
+	dp: Vec<Vec<i32>>,
+	restr: Vec<Vec<u8>>
+}
+
+impl EditDistance {
+	pub fn new() -> Self {
+		Self {
+			ss: String::new(),
+			st: String::new(),
+			dp: Vec::<Vec<i32>>::new(),
+			restr: Vec::<Vec<u8>>::new()
 		}
 	}
 
-	return (dp[n][m], lf_to_br(dps[n][m].clone()));
+	pub fn calc(&mut self, ss: String, st: String) -> i32 {
+		self.ss = ss;
+		self.st = st;
+		let s = self.ss.as_bytes();
+		let t = self.st.as_bytes();
+		let n = self.ss.len();
+		let m = self.st.len();
+		self.dp = vec![vec![1e9 as i32; m+1]; n+1];
+		self.restr = vec![vec![0 as u8; m+1]; n+1];
+
+		self.dp[0][0] = 0;
+		for i in 0..=n {
+			for j in 0..=m {
+				if i>0 && j>0 {
+					if s[i-1]==t[j-1] {
+						if self.dp[i][j] > self.dp[i-1][j-1] {
+							self.dp[i][j] = self.dp[i-1][j-1];
+							self.restr[i][j] = 0;	// None
+						}
+					} else {
+						if self.dp[i][j] > self.dp[i-1][j-1] + 1 {
+							self.dp[i][j] = self.dp[i-1][j-1] + 1;
+							self.restr[i][j] = 1;	// replace
+						}
+					}
+				}
+
+				if i>0 {
+					if self.dp[i][j] > self.dp[i-1][j] + 1 {
+						self.dp[i][j] = self.dp[i-1][j] + 1;
+						self.restr[i][j] = 2;	// delete
+					}
+				}
+				if j>0 {
+					if self.dp[i][j] > self.dp[i][j-1] + 1 {
+						self.dp[i][j] = self.dp[i][j-1] + 1;
+						self.restr[i][j] = 3;	// insert
+					}
+				}
+			}
+		}
+
+		self.dp[n][m]
+	}
+
+	pub fn restore(&self) -> String {
+		let mut ret = Vec::<String>::new();
+		let n = self.ss.len();
+		let m = self.st.len();
+		let mut i = n;
+		let mut j = m;
+
+		while i != 0 || j != 0 {
+			match self.restr[i][j] {
+				0 => {
+					i -= 1;
+					j -= 1;
+					ret.push(self.ss[i..i+1].to_string());
+				},
+				1 => {
+					i -= 1;
+					j -= 1;
+					ret.push(replace_deco(&self.ss[i..i+1], &self.st[j..j+1]));
+				},
+				2 => {
+					i -= 1;
+					ret.push(delete_deco(&self.ss[i..i+1]));
+				},
+				3 => {
+					j -= 1;
+					ret.push(insert_deco(&self.st[j..j+1]));
+				},
+				_ => {}
+			}
+		}
+
+		ret.reverse();
+		lf_to_br(ret.into_iter().collect()).clone()
+	}
 }
+
+
 
 
 fn lf_to_br(s: String) -> String {
@@ -70,12 +141,13 @@ mod tests {
 	use super::*;
 	#[test]
 	fn edit_distance_test() {
+		let mut edist = EditDistance::new();
 		let mut s = "acac".to_string();
 		let mut t = "acm".to_string();
-		assert_eq!((2, "acam".to_string()), edit_distance(s, t));
+		assert_eq!(2, edist.calc(s, t));
 
 		s = "icpc".to_string();
 		t = "icpc".to_string();
-		assert_eq!((0, "icpc".to_string()), edit_distance(s, t));
+		assert_eq!(0, edist.calc(s, t));
 	}
 }

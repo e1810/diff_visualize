@@ -14,6 +14,7 @@ enum MyError {
 impl ResponseError for MyError {}
 
 
+
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
@@ -38,6 +39,7 @@ async fn index_get() -> Result<HttpResponse, MyError> {
 }
 
 
+
 #[derive(Deserialize)]
 struct Submission {
 	text1: String,
@@ -46,7 +48,9 @@ struct Submission {
 
 #[post("/")]
 async fn index_post(params: web::Form<Submission>) -> Result<HttpResponse, MyError> {
-	let (di, ds) = find_diff::edit_distance(params.text1.clone(), params.text2.clone());
+	let mut edist_calculator = find_diff::EditDistance::new();
+	let di = edist_calculator.calc(params.text1.clone(), params.text2.clone());
+	let ds = edist_calculator.restore();
 	let response_body = IndexTemplate{
 		s: params.text1.clone(),
 		t: params.text2.clone(),
@@ -58,6 +62,7 @@ async fn index_post(params: web::Form<Submission>) -> Result<HttpResponse, MyErr
 		.body(response_body)
 	)
 }
+
 
 
 #[actix_web::main]
